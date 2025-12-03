@@ -7,7 +7,7 @@ export default function RasterLayer({ frame, visible }) {
     <img
       alt="raster"
       src={src}
-      className="canvas-layer fade-image"
+      className="ease-in-out transition-opacity duration-150"
       style={{ zIndex: visible ? 40 : 0, opacity: visible ? 1 : 0 }}
       width={frame ? frame.width : undefined}
       height={frame ? frame.height : undefined}

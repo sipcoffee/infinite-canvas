@@ -3,6 +3,8 @@ import { generateStars } from "./data/stars";
 import CanvasLayer from "./components/CanvasLayer";
 import { createSocket, requestRaster } from "./ws/socket";
 import useViewport from "./hooks/useViewPort";
+import { Button } from "./components/ui/button";
+import { ZoomIn, ZoomOut } from "lucide-react";
 const RASTER_THRESHOLD = 6;
 const DEBOUNCE_MS = 150;
 export default function App() {
@@ -11,7 +13,7 @@ export default function App() {
     y: 0,
     zoom: 1,
   });
-  9;
+
   const [stars] = useState(() => generateStars(1000000));
   const [socket, setSocket] = useState(null);
   const [rasterFrame, setRasterFrame] = useState(null);
@@ -49,17 +51,19 @@ export default function App() {
       socket.send(JSON.stringify({ type: "renderRequest", viewport: payload }));
     }
   }, [viewport, mode, socket, lastReq]);
+
   return (
     <div>
-      <div className="controls">
-        <button className="button" onClick={() => zoomAt(1.2)}>
-          Zoom In
-        </button>
-        <button className="button" onClick={() => zoomAt(0.83)}>
-          Zoom Out
-        </button>
-        <button
-          className="button"
+      <div className="absolute top-3 left-3 flex z-30 bg-transparent text-white">
+        <Button variant="ghost" onClick={() => zoomAt(1.2)}>
+          <ZoomIn />
+        </Button>
+        <Button variant="ghost" onClick={() => zoomAt(0.83)}>
+          <ZoomOut />
+        </Button>
+
+        <Button
+          variant="ghost"
           onClick={() =>
             setViewport({
               x: 0,
@@ -71,13 +75,18 @@ export default function App() {
           }
         >
           Reset
-        </button>
+        </Button>
       </div>
-      <div className="info">
-        Mode: {mode} · Zoom: {viewport.zoom.toFixed(2)}
+
+      <div className="z-10 absolute top-3 right-1.5 p-4 bg-gray-600 rounded-sm flex flex-col gap-1">
+        <div>
+          Mode: {mode} · Zoom: {viewport.zoom.toFixed(2)}
+        </div>
+        <div>
+          Coordinates: {viewport.x.toFixed(5)}, {viewport.y.toFixed(5)}
+        </div>
       </div>
-      Mode: {mode} · Zoom: {viewport.zoom.toFixed(2)}, x:{viewport.x}, y:
-      {viewport.y}
+
       <CanvasLayer
         viewport={viewport}
         panBy={panBy}

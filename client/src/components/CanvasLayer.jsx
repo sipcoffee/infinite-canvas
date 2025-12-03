@@ -52,9 +52,12 @@ export default function CanvasLayer({
   }, [panBy, zoomAt]);
 
   return (
-    <div ref={containerRef} className="canvas-container">
+    <div
+      ref={containerRef}
+      className="w-screen h-screen relative overflow-hidden"
+    >
       <canvas
-        className="canvas-layer"
+        className="absolute left:0 right-0"
         style={{ zIndex: 10 }}
         width={viewport.width}
         height={viewport.height}
