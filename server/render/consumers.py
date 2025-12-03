@@ -1,7 +1,8 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
-from .raster import generate_frame
+from .raster import generate_frame, get_stars_for_viewport
 from .protocol import REQ_RENDER, RES_FRAME
+
 
 class RenderConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -10,23 +11,41 @@ class RenderConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         pass
+    
 
     async def receive(self, text_data=None, bytes_data=None):
-        print("WebSocket received:", text_data)
+        print("WebSocket received:", json.dumps(text_data, indent=5))
         try:
             data = json.loads(text_data)
         except Exception:
+            print('errrs')
             return
+        
+        if data["type"] == "REQ_STARS":
+            viewport = data["viewport"]
+            stars = get_stars_for_viewport(viewport)
+
+            await self.send(json.dumps({
+                "type": "RES_STARS",
+                "stars": stars
+            }))
         
         if data.get('type') == REQ_RENDER:
             viewport = data.get('viewport', {})
+            print(f'View port is x:{viewport['x']} and y:{viewport['y']}')
             # Basic sanity: ensure ints
             viewport['width'] = int(viewport.get('width', 800))
             viewport['height'] = int(viewport.get('height', 600))
             frame = generate_frame(viewport)
+            print('-----------------GENERATED NEW FRAME---------------------')
 
             await self.send(text_data=json.dumps({
                 'type': RES_FRAME,
                 'frameId': frame['frameId'],
-                'image': frame['image']
+                'image': frame['image'],
+                'width': viewport['width'],
+                'height': viewport['height'],
+                'x': viewport['x'],
+                'y': viewport['y'],
+                'zoom': viewport['zoom']
             }))
