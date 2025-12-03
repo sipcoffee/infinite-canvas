@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import VectorLayer from "./VectorLayer";
 import RasterLayer from "./RasterLayer";
+import { useViewportStore } from "@/store/useViewPortStore";
 
 export default function CanvasLayer({
   viewport,
@@ -10,6 +11,7 @@ export default function CanvasLayer({
   renderMode,
   rasterFrame,
 }) {
+
   const containerRef = useRef(null);
   const dragging = useRef(false);
   const last = useRef([0, 0]);
@@ -50,7 +52,8 @@ export default function CanvasLayer({
       el.removeEventListener("wheel", onWheel);
     };
   }, [panBy, zoomAt]);
-
+  
+  // console.log(viewport)
   return (
     <div
       ref={containerRef}
@@ -62,6 +65,7 @@ export default function CanvasLayer({
         width={viewport.width}
         height={viewport.height}
       />
+        {renderMode === 'raster' &&( <div className="absolute top-0 left-0 bg-transparent z-50 flex items-center justify-center w-full h-20"><h1 className="text-white">loading..</h1></div>)}
       {/* Vector layer renders directly to a canvas inside it */}
       <VectorLayer
         viewport={viewport}
@@ -70,7 +74,7 @@ export default function CanvasLayer({
       />
 
       {/* Raster layer is an <img> overlayed - we keep vector visible until first raster frame arrives */}
-      <RasterLayer frame={rasterFrame} visible={renderMode === "raster"} />
+      <RasterLayer frame={rasterFrame} visible={renderMode === "raster"} viewport={viewport}/>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Button } from "./components/ui/button";
 import { ZoomIn, ZoomOut } from "lucide-react";
 const RASTER_THRESHOLD = 6;
 const DEBOUNCE_MS = 150;
+
 export default function App() {
   const { viewport, panBy, zoomAt, setViewport } = useViewport({
     x: 0,
@@ -15,6 +16,7 @@ export default function App() {
   });
 
   const [stars] = useState(() => generateStars(1000000));
+  // const [stars, setStars] = useState([]);  // <-- NO MORE generateStars()
   const [socket, setSocket] = useState(null);
   const [rasterFrame, setRasterFrame] = useState(null);
   const [mode, setMode] = useState("vector");
@@ -22,18 +24,25 @@ export default function App() {
 
   useEffect(() => {
     const s = createSocket((data) => {
+         console.log("WS =>", data);
+
       if (data.type === "frame") {
+        console.log(data)
         // data.image is base64
         setRasterFrame({
           frameId: data.frameId,
           image: data.image,
           width: viewport.width,
           height: viewport.height,
+          x: data.x,
+          y: data.y,
+          zoom: data.zoom
         });
       }
     });
     setSocket(s);
   }, []);
+
   // switching logic
   useEffect(() => {
     const next = viewport.zoom >= RASTER_THRESHOLD ? "raster" : "vector";
@@ -52,13 +61,14 @@ export default function App() {
     }
   }, [viewport, mode, socket, lastReq]);
 
+
   return (
-    <div>
+    <div className="relative">
       <div className="absolute top-3 left-3 flex z-30 bg-transparent text-white">
-        <Button variant="ghost" onClick={() => zoomAt(1.2)}>
+        <Button variant="ghost" onClick={() => zoomAt(0.25)}>
           <ZoomIn />
         </Button>
-        <Button variant="ghost" onClick={() => zoomAt(0.83)}>
+        <Button variant="ghost" onClick={() => zoomAt(-0.25)}>
           <ZoomOut />
         </Button>
 
@@ -74,7 +84,7 @@ export default function App() {
             })
           }
         >
-          Reset
+          Reset 
         </Button>
       </div>
 
