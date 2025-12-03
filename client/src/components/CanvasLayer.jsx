@@ -1,0 +1,73 @@
+import React, { useRef, useEffect, useState } from "react";
+import VectorLayer from "./VectorLayer";
+import RasterLayer from "./RasterLayer";
+
+export default function CanvasLayer({
+  viewport,
+  panBy,
+  zoomAt,
+  stars,
+  renderMode,
+  rasterFrame,
+}) {
+  const containerRef = useRef(null);
+  const dragging = useRef(false);
+  const last = useRef([0, 0]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    function onDown(e) {
+      dragging.current = true;
+      last.current = [e.clientX, e.clientY];
+    }
+    function onUp() {
+      dragging.current = false;
+    }
+    function onMove(e) {
+      if (!dragging.current) return;
+      const dx = e.clientX - last.current[0];
+      const dy = e.clientY - last.current[1];
+      last.current = [e.clientX, e.clientY];
+      panBy(dx, dy);
+    }
+    function onWheel(e) {
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 0.88 : 1.12;
+      zoomAt(factor, e.clientX, e.clientY);
+    }
+
+    el.addEventListener("mousedown", onDown);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mousemove", onMove);
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mousemove", onMove);
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [panBy, zoomAt]);
+
+  return (
+    <div ref={containerRef} className="canvas-container">
+      <canvas
+        className="canvas-layer"
+        style={{ zIndex: 10 }}
+        width={viewport.width}
+        height={viewport.height}
+      />
+      {/* Vector layer renders directly to a canvas inside it */}
+      <VectorLayer
+        viewport={viewport}
+        stars={stars}
+        visible={renderMode === "vector"}
+      />
+
+      {/* Raster layer is an <img> overlayed - we keep vector visible until first raster frame arrives */}
+      <RasterLayer frame={rasterFrame} visible={renderMode === "raster"} />
+    </div>
+  );
+}
