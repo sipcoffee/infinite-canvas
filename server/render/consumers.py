@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
-from .raster import generate_frame, get_stars_for_viewport
+from .raster import generate_frame
 from .protocol import REQ_RENDER, RES_FRAME
 
 
@@ -21,19 +21,10 @@ class RenderConsumer(AsyncWebsocketConsumer):
             print('errrs')
             return
         
-        if data["type"] == "REQ_STARS":
-            viewport = data["viewport"]
-            stars = get_stars_for_viewport(viewport)
-
-            await self.send(json.dumps({
-                "type": "RES_STARS",
-                "stars": stars
-            }))
-        
         if data.get('type') == REQ_RENDER:
             viewport = data.get('viewport', {})
             print(f'View port is x:{viewport['x']} and y:{viewport['y']}')
-            # Basic sanity: ensure ints
+            
             viewport['width'] = int(viewport.get('width', 800))
             viewport['height'] = int(viewport.get('height', 600))
             frame = generate_frame(viewport)

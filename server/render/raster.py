@@ -4,74 +4,9 @@ import io
 import base64
 import random
 import math
+from .utils import lerp, lerp_color
 
-
-CHUNK_SIZE = 512             # world units
-STARS_PER_CHUNK = 40         # adjustable
 FRAME_COUNTER = 0
-
-def mulberry32(seed):
-    def rng():
-        nonlocal seed
-        seed = (seed + 0x6D2B79F5) & 0xffffffff
-        t = seed
-        t = (t ^ (t >> 15)) * (t | 1)
-        t &= 0xffffffff
-        t ^= t + (t ^ (t >> 7)) * (t | 61)
-        return ((t ^ (t >> 14)) & 0xffffffff) / 2**32
-    return rng
-
-def get_chunk_seed(cx, cy):
-    return ((cx * 73856093) ^ (cy * 19349663)) & 0xffffffff
-
-
-def generate_chunk_stars(cx, cy):
-    seed = get_chunk_seed(cx, cy)
-    rng = mulberry32(seed)
-
-    stars = []
-    for _ in range(STARS_PER_CHUNK):
-        x = cx * CHUNK_SIZE + rng() * CHUNK_SIZE
-        y = cy * CHUNK_SIZE + rng() * CHUNK_SIZE
-        brightness = rng()
-        size = 0.8 + brightness * 1.5
-
-        stars.append({
-            "x": x,
-            "y": y,
-            "size": size,
-            "brightness": brightness
-        })
-    
-    return stars
-
-def get_stars_for_viewport(viewport):
-    x = viewport["x"]
-    y = viewport["y"]
-    zoom = viewport["zoom"]
-    width = viewport["width"]
-    height = viewport["height"]
-
-    world_w = width / zoom
-    world_h = height / zoom
-
-    left = x - world_w / 2
-    right = x + world_w / 2
-    top = y - world_h / 2
-    bottom = y + world_h / 2
-
-    cx0 = int(left // CHUNK_SIZE)
-    cx1 = int(right // CHUNK_SIZE)
-    cy0 = int(top // CHUNK_SIZE)
-    cy1 = int(bottom //CHUNK_SIZE)
-
-    stars = []
-    for cx in range(cx0, cx1+1):
-        for cy in range(cy0, cy1+1):
-            stars.extend(generate_chunk_stars(cx, cy))
-
-    return stars
-
 
 def draw_star_polygon(draw, center_x, center_y, outer_radius, inner_radius, fill_color):
     """Calculates and draws a 5-pointed star polygon."""
@@ -101,22 +36,45 @@ def draw_star_polygon(draw, center_x, center_y, outer_radius, inner_radius, fill
 def generate_frame(viewport):
     global FRAME_COUNTER
     FRAME_COUNTER += 1
-    print(f'generating new frame and viewport value is {viewport}')
-    # ---------------------------------------------------------
-    # Extract viewport params
-    # ---------------------------------------------------------
+
     w = int(viewport.get("width", 800))
     h = int(viewport.get("height", 600))
-    print(f'wid: {w} and hei: {h}')
-    print(type(viewport.get("x", 0)), type(viewport.get("y", 0)))
-    x = float(viewport.get("x", 0))      # world X
-    y = float(viewport.get("y", 0))      # world Y
+    x = float(viewport.get("x", 0))
+    y = float(viewport.get("y", 0))
     zoom = float(viewport.get("zoom", 1))
 
-    # Create canvas
-    img = Image.new("RGB", (w, h), (3, 3, 10))
-    draw = ImageDraw.Draw(img)
+    palette = [
+        (0, 0, 53),
+        (0, 0, 66),
+        (0, 0, 83),
+        (0, 0, 104),
+        (28, 28, 132),
+    ]
+    black = (0, 0, 0)
 
+    # -----------------------------
+    # Compute the background color
+    # -----------------------------
+    if zoom <= 6:
+        bg_color = (3, 3, 10)
+    else:
+        z = min(zoom, 10) - 6
+        i = int(z)
+        t = z - i
+
+        if i >= len(palette) - 1:
+            base_color = palette[-1]
+        else:
+            base_color = lerp_color(palette[i], palette[i+1], t)
+
+        blend_to_black = min(max((zoom - 6) / 4, 0), 1)
+        bg_color = lerp_color(base_color, black, blend_to_black)
+
+    # -----------------------------
+    # ALWAYS create image + draw
+    # -----------------------------
+    img = Image.new("RGB", (w, h), bg_color)
+    draw = ImageDraw.Draw(img)
     # ---------------------------------------------------------
     # Define the WORLD BOUNDS shown in this viewport
     # ---------------------------------------------------------
@@ -172,3 +130,5 @@ def generate_frame(viewport):
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
 
     return {"frameId": FRAME_COUNTER, "image": encoded}
+
+
