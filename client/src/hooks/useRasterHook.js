@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react"; 
 
 export default function useRasterRequest({
   viewport,
   mode,
   socket,
-  debounceMs = 500, // Controls the frequent request of raster image
+  debounceMs = 500,
+  visibleStars   // ← already passed from parent
 }) {
   const lastReqRef = useRef(0);
 
@@ -16,7 +17,15 @@ export default function useRasterRequest({
     lastReqRef.current = now;
 
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "renderRequest", viewport }));
+      const payload = {
+        type: "renderRequest",
+        viewport,
+        stars: visibleStars || []   // ← new field added
+      };
+
+      console.log("render request payload:", payload);
+
+      socket.send(JSON.stringify(payload));
     }
-  }, [viewport, mode, socket, debounceMs]);
+  }, [viewport, mode, socket, debounceMs, visibleStars]);  // ← include visibleStars
 }

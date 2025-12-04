@@ -1,56 +1,76 @@
-import { useState, useEffect, useCallback } from "react";
 
-export default function useViewport(initial = {}) {
-  // Separate size from transform to avoid unnecessary re-renders
-  const [size, setSize] = useState({
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
+export default function useViewport(initial = { x: 0, y: 0, zoom: 1 }) {
+  const [viewport, setViewport] = useState({
+    ...initial,
     width: window.innerWidth,
     height: window.innerHeight,
   });
 
-  const [transform, setTransform] = useState({
-    x: initial.x || 0,
-    y: initial.y || 0,
-    zoom: initial.zoom || 1,
-  });
-
-  // Handle window resize safely
+  // Handle window resize
   useEffect(() => {
-    const handleResize = () => {
-      setSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    function onResize() {
+      setViewport((v) => ({
+        ...v,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }));
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Pan the viewport
   const panBy = useCallback((dx, dy) => {
-    setTransform((v) => ({ ...v, x: v.x - dx / v.zoom, y: v.y - dy / v.zoom }));
+    setViewport((v) => ({
+      ...v,
+      x: v.x - dx / v.zoom,
+      y: v.y - dy / v.zoom,
+    }));
   }, []);
 
-  // Zoom at a specific point
-  const zoomAt = useCallback(
-    (zoomFactor, centerX = null, centerY = null) => {
-      setTransform((v) => {
-        const prevZoom = v.zoom;
-        const nextZoom = Math.max(0.125, Math.min(v.zoom * zoomFactor, 64));
+  const zoomAt = useCallback((factor, clientX, clientY) => {
+    setViewport((v) => {
+      const cx = clientX ?? v.width / 2;
+      const cy = clientY ?? v.height / 2;
+      const worldX = v.x + (cx - v.width / 2) / v.zoom;
+      const worldY = v.y + (cy - v.height / 2) / v.zoom;
+      const newZoom = v.zoom * factor;
+      return {
+        ...v,
+        zoom: newZoom,
+        x: worldX - (cx - v.width / 2) / newZoom,
+        y: worldY - (cy - v.height / 2) / newZoom,
+      };
+    });
+  }, []);
 
-        if (centerX == null || centerY == null) return { ...v, zoom: nextZoom };
+  // New function to get visible stars
+  const getVisibleStars = useCallback((stars) => {
+    const visibleStars = [];
+    const halfWidth = viewport.width / 2;
+    const halfHeight = viewport.height / 2;
 
-        const worldX = (centerX - size.width / 2) / prevZoom + v.x;
-        const worldY = (centerY - size.height / 2) / prevZoom + v.y;
+    for (const star of stars) {
+      const sx = (star.x - viewport.x) * viewport.zoom + halfWidth;
+      const sy = (star.y - viewport.y) * viewport.zoom + halfHeight;
 
-        const newX = worldX - (centerX - size.width / 2) / nextZoom;
-        const newY = worldY - (centerY - size.height / 2) / nextZoom;
+      if (
+        sx >= -50 &&
+        sx <= viewport.width + 50 &&
+        sy >= -50 &&
+        sy <= viewport.height + 50
+      ) {
+        visibleStars.push({
+          ...star,
+          screenX: sx,
+          screenY: sy,
+        });
+      }
+    }
 
-        return { ...v, zoom: nextZoom, x: newX, y: newY };
-      });
-    },
-    [size.width, size.height]
-  );
+    return visibleStars;
+  }, [viewport]);
 
-  // Return combined viewport object
-  const viewport = { ...transform, ...size };
-
-  return { viewport, setTransform, panBy, zoomAt };
+  return { viewport, panBy, zoomAt, getVisibleStars };
 }

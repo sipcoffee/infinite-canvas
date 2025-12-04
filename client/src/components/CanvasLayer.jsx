@@ -9,6 +9,7 @@ export default function CanvasLayer({
   zoomAt,
   renderMode,
   rasterFrame,
+  onVisibleStarsChange,
 }) {
   const containerRef = useRef(null);
   const dragging = useRef(false);
@@ -95,6 +96,7 @@ export default function CanvasLayer({
           opacity: renderMode === "raster" && isTransitioning ? 0 : 1,
           transition: "opacity 300ms ease-out",
         }}
+        onVisibleStarsChange={onVisibleStarsChange}
       />
 
       {/* Raster layer with fade-in transition */}

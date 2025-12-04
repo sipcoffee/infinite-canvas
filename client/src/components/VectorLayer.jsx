@@ -1,11 +1,26 @@
 import { generateStars } from "@/data/stars";
 import React, { useEffect, useRef, useState } from "react";
 
-export default function VectorLayer({ viewport, visible }) {
+export default function VectorLayer({ viewport, visible, onVisibleStarsChange }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
 
   const [stars] = useState(() => generateStars(1000000));
+
+  const [visibleStars, setVisibleStars] = useState([]);
+
+  useEffect(() => {
+    const newVisible = getVisibleStars();
+    setVisibleStars(newVisible);
+
+    // send up to CanvasLayer/App
+    if (onVisibleStarsChange) {
+      onVisibleStarsChange(newVisible);
+    }
+
+  }, [viewport]);
+
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -92,6 +107,26 @@ export default function VectorLayer({ viewport, visible }) {
 
     return () => cancelAnimationFrame(rafRef.current);
   }, [viewport, stars, visible]);
+
+  function getVisibleStars() {
+    const visible = [];
+
+    const w = viewport.width;
+    const h = viewport.height;
+
+    for (const s of stars) {
+      const sx = (s.x - viewport.x) * viewport.zoom + w / 2;
+      const sy = (s.y - viewport.y) * viewport.zoom + h / 2;
+
+      if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) {
+        visible.push(s);
+      }
+    }
+
+    return visible;
+  }
+
+  // console.log('visible stars from VECTOR', visibleStars)
 
   return (
     <div style={{ position: "relative" }}>
