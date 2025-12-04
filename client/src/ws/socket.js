@@ -14,7 +14,6 @@ export function createSocket(onMessage) {
   socket.onmessage = (ev) => {
     try {
       const data = JSON.parse(ev.data);
-      console.log(data)
       if (onMessage) onMessage(data);
     } catch (e) {
       console.warn("invalid ws msg", e);
@@ -34,11 +33,17 @@ export function requestVector(viewport) {
   socket.send(JSON.stringify({ type: "renderRequest", viewport }));
 }
 
-export function requestStars(viewport){
-  socket.send(JSON.stringify({
-    type: "REQ_STARS",
-    viewport: {
-        x, y, zoom, width, height
-    }
-}));
+export function requestStars(viewport) {
+  socket.send(
+    JSON.stringify({
+      type: "REQ_STARS",
+      viewport: {
+        x,
+        y,
+        zoom,
+        width,
+        height,
+      },
+    })
+  );
 }

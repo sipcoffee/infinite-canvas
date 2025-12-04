@@ -1,20 +1,36 @@
 import React, { useRef, useEffect, useState } from "react";
 import VectorLayer from "./VectorLayer";
 import RasterLayer from "./RasterLayer";
-import { useViewportStore } from "@/store/useViewPortStore";
+import useRasterRequest from "@/hooks/useRasterHook";
 
 export default function CanvasLayer({
   viewport,
   panBy,
   zoomAt,
-  stars,
   renderMode,
   rasterFrame,
 }) {
-
   const containerRef = useRef(null);
   const dragging = useRef(false);
   const last = useRef([0, 0]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [lastRasterFrame, setLastRasterFrame] = useState(null);
+
+  // Detect when raster frame changes (new frame loaded)
+  useEffect(() => {
+    if (rasterFrame && rasterFrame !== lastRasterFrame) {
+      setLastRasterFrame(rasterFrame);
+    }
+  }, [rasterFrame, lastRasterFrame]);
+
+  // Trigger transition state when mode changes
+  useEffect(() => {
+    if (renderMode === "raster" && lastRasterFrame) {
+      setIsTransitioning(true);
+      const timer = setTimeout(() => setIsTransitioning(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [renderMode, lastRasterFrame]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -52,12 +68,17 @@ export default function CanvasLayer({
       el.removeEventListener("wheel", onWheel);
     };
   }, [panBy, zoomAt]);
-  
+
+  // Keep vector visible during transition OR if raster not ready
+  const showVector =
+    renderMode === "vector" || isTransitioning || !lastRasterFrame;
+  const showRaster = renderMode === "raster" && lastRasterFrame;
+
   // console.log(viewport)
   return (
     <div
       ref={containerRef}
-      className="w-screen h-screen relative overflow-hidden"
+      className="w-full h-full relative overflow-hidden bg-black"
     >
       <canvas
         className="absolute left:0 right-0"
@@ -65,16 +86,27 @@ export default function CanvasLayer({
         width={viewport.width}
         height={viewport.height}
       />
-        {renderMode === 'raster' &&( <div className="absolute top-0 left-0 bg-transparent z-50 flex items-center justify-center w-full h-20"><h1 className="text-white">loading..</h1></div>)}
-      {/* Vector layer renders directly to a canvas inside it */}
+
+      {/* Vector layer with fade-out transition */}
       <VectorLayer
         viewport={viewport}
-        stars={stars}
-        visible={renderMode === "vector"}
+        visible={showVector}
+        style={{
+          opacity: renderMode === "raster" && isTransitioning ? 0 : 1,
+          transition: "opacity 300ms ease-out",
+        }}
       />
 
-      {/* Raster layer is an <img> overlayed - we keep vector visible until first raster frame arrives */}
-      <RasterLayer frame={rasterFrame} visible={renderMode === "raster"} viewport={viewport}/>
+      {/* Raster layer with fade-in transition */}
+      <RasterLayer
+        frame={rasterFrame}
+        visible={showRaster}
+        viewport={viewport}
+        style={{
+          opacity: isTransitioning ? 0 : 1,
+          transition: "opacity 300ms ease-in",
+        }}
+      />
     </div>
   );
 }

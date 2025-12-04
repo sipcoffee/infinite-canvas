@@ -1,12 +1,12 @@
+import { generateStars } from "@/data/stars";
 import React, { useEffect, useRef, useState } from "react";
 
-export default function VectorLayer({ viewport, stars, visible }) {
+export default function VectorLayer({ viewport, visible }) {
   const canvasRef = useRef(null);
-  const rafRef = useRef(null);  
-  const [hoveredStar, setHoveredStar] = useState(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const rafRef = useRef(null);
 
-    useEffect(() => {
+  const [stars] = useState(() => generateStars(1000000));
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -40,10 +40,12 @@ export default function VectorLayer({ viewport, stars, visible }) {
         const sx = (s.x - viewport.x) * viewport.zoom + canvas.width / 2;
         const sy = (s.y - viewport.y) * viewport.zoom + canvas.height / 2;
 
-
-
-
-        if (sx < -50 || sx > canvas.width + 50 || sy < -50 || sy > canvas.height + 50)
+        if (
+          sx < -50 ||
+          sx > canvas.width + 50 ||
+          sy < -50 ||
+          sy > canvas.height + 50
+        )
           return;
 
         // ⭐ animate size
@@ -63,9 +65,15 @@ export default function VectorLayer({ viewport, stars, visible }) {
         ctx.beginPath();
         ctx.moveTo(sx, sy - outerRadius);
         for (let i = 0; i < numPoints; i++) {
-          ctx.lineTo(sx + Math.cos(rot) * outerRadius, sy + Math.sin(rot) * outerRadius);
+          ctx.lineTo(
+            sx + Math.cos(rot) * outerRadius,
+            sy + Math.sin(rot) * outerRadius
+          );
           rot += step;
-          ctx.lineTo(sx + Math.cos(rot) * innerRadius, sy + Math.sin(rot) * innerRadius);
+          ctx.lineTo(
+            sx + Math.cos(rot) * innerRadius,
+            sy + Math.sin(rot) * innerRadius
+          );
           rot += step;
         }
         ctx.closePath();
@@ -85,15 +93,12 @@ export default function VectorLayer({ viewport, stars, visible }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [viewport, stars, visible]);
 
-
-
-    return (
+  return (
     <div style={{ position: "relative" }}>
       <canvas
         ref={canvasRef}
         style={{ zIndex: visible ? 20 : 5, opacity: visible ? 1 : 0.001 }}
       />
-   
     </div>
   );
 }
