@@ -14,7 +14,7 @@ class RenderConsumer(AsyncWebsocketConsumer):
     
 
     async def receive(self, text_data=None, bytes_data=None):
-        print("WebSocket received:", json.dumps(text_data, indent=5))
+        # print("WebSocket received:", json.dumps(text_data, indent=5))
         try:
             data = json.loads(text_data)
         except Exception:
@@ -23,13 +23,14 @@ class RenderConsumer(AsyncWebsocketConsumer):
         
         if data.get('type') == REQ_RENDER:
             viewport = data.get('viewport', {})
-            print(f'View port is x:{viewport['x']} and y:{viewport['y']}')
+            stars = data.get('stars', [])
+            print(f'View port is x:{viewport['x']} and y:{viewport['y']} and zoom:{viewport['zoom']}')
             
             viewport['width'] = int(viewport.get('width', 800))
             viewport['height'] = int(viewport.get('height', 600))
-            frame = generate_frame(viewport)
+            frame = generate_frame(viewport, stars)
             print('-----------------GENERATED NEW FRAME---------------------')
-
+            print(f'Length of stars {len(stars)}')
             await self.send(text_data=json.dumps({
                 'type': RES_FRAME,
                 'frameId': frame['frameId'],

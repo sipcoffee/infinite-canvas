@@ -33,7 +33,7 @@ def draw_star_polygon(draw, center_x, center_y, outer_radius, inner_radius, fill
     # draw.polygon expects a list of (x, y) tuples
     draw.polygon(points, fill=fill_color)
 
-def generate_frame(viewport):
+def generate_frame(viewport, stars):
     global FRAME_COUNTER
     FRAME_COUNTER += 1
 
@@ -42,6 +42,10 @@ def generate_frame(viewport):
     x = float(viewport.get("x", 0))
     y = float(viewport.get("y", 0))
     zoom = float(viewport.get("zoom", 1))
+
+    # print(f'stars data len {len(stars)} and {stars}')
+    num_vector_stars = len(stars)
+    num_random_stars = int(num_vector_stars * 0.2)
 
     palette = [
         (0, 0, 53),
