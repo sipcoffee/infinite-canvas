@@ -158,3 +158,7 @@ I choose the star map for ease of implementation and familiarize the concept of 
 Now here comes to the core part of the project, the generating of random stars. At first i thought making an API from my server to generate this initial stars to the vector but that beats the purpose of the client side rendering and also this may cause performance issue since it will be requesting star on every pan. And now I'm struggling on the right approach on generating the stars but at the end it just hit me "hey why not send just send the current stars that are on the viewport I can just generate them on the image as long i have their coordinates". Then came a new problem the when generating the raster frame the alignment of the stars were way way too off. The problem is the Vector space is at the center of the and my Raster space is using the top-left corner of the screen and the final result is? they are not on the same coordinate system. To solve this I've just match the Raster to my Vector coordinate system.
 
 It's a great test project, I really enjoyed building it. I've learn a lot of skills on this test. 
+
+## Author
+
+[Eduardo Bautista](https://www.linkedin.com/in/bautistaeduardo/)
