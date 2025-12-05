@@ -1,5 +1,5 @@
 # Responsible for raster generation based on viewport
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageColor
 import io
 import base64
 import random
@@ -43,10 +43,6 @@ def generate_frame(viewport, stars):
     y = float(viewport.get("y", 0))
     zoom = float(viewport.get("zoom", 1))
 
-    # print(f'stars data len {len(stars)} and {stars}')
-    num_vector_stars = len(stars)
-    num_random_stars = int(num_vector_stars * 0.2)
-
     palette = [
         (0, 0, 53),
         (0, 0, 66),
@@ -79,54 +75,38 @@ def generate_frame(viewport, stars):
     # -----------------------------
     img = Image.new("RGB", (w, h), bg_color)
     draw = ImageDraw.Draw(img)
-    # ---------------------------------------------------------
-    # Define the WORLD BOUNDS shown in this viewport
-    # ---------------------------------------------------------
-    world_w = w / zoom
-    world_h = h / zoom
-
-    world_left = x
-    world_top = y
-    world_right = x + world_w
-    world_bottom = y + world_h
 
     # ---------------------------------------------------------
-    # Deterministic seed so stars do not change on each pan
+    # Draw provided VECTOR stars in raster mode (scaled by zoom)
     # ---------------------------------------------------------
-    seed = (int(x * 31) ^ int(y * 131) ^ int(zoom * 977)) & 0xffffffff
-    rng = random.Random(seed)
+    for star in stars:
+        worldX = star["x"]
+        worldY = star["y"]
 
-    # Density scaled by zoom
-    density = int(min(5000, max(15, (world_w * world_h) * 0.0004 * zoom)))
+        # convert to screen coordinates
+        screenX = (worldX - x) * zoom + w / 2
+        screenY = (worldY - y) * zoom + h / 2
 
-    # ---------------------------------------------------------
-    # Generate stars INSIDE the world rectangle
-    # ---------------------------------------------------------
-    for _ in range(density):
-        # pick a world coordinate inside viewport world-rect
-        worldX = rng.uniform(world_left, world_right)
-        worldY = rng.uniform(world_top, world_bottom)
+        # skip stars outside viewport
+        if not (0 <= screenX <= w and 0 <= screenY <= h):
+            continue
 
-        # convert world -> screen coords
-        screenX = (worldX - world_left) * zoom
-        screenY = (worldY - world_top) * zoom
-
-        # star size scales with zoom
-        size = max(0.9, rng.random() * (2.4 * zoom))
+        # scaling size in raster mode
+        size = star["size"] * zoom
         outer_radius = size
         inner_radius = size * 0.5
 
-        c = int(180 + rng.random() * 75)
-        fill_color = (c, c, c)
+        # vector colors are hex → convert
+        fill_color = ImageColor.getrgb(star["color"])
 
-        draw_star_polygon(draw, screenX, screenY, outer_radius, inner_radius, fill_color)
-
-    # ---------------------------------------------------------
-    # Draw center dot for testing alignment
-    # ---------------------------------------------------------
-    cx = w // 2
-    cy = h // 2
-    draw.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(255, 0, 0))
+        draw_star_polygon(
+            draw,
+            screenX,
+            screenY,
+            outer_radius,
+            inner_radius,
+            fill_color
+        )
 
     # encode PNG
     buffer = io.BytesIO()
