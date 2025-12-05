@@ -48,8 +48,27 @@ Access link
 http://localhost:5173/
 ```
 
-## Architecture
+## Architecture overview
 
+The system is a distributed application based on a Client-Server architecture designed for high-performance, adaptive rendering of an Infinite Canvas. The central challenge is maintaining a single, consistent Viewport State across both rendering modes.
+
+1. Core Compnoents
+* React JS - Client
+* Python - Server
+* Websocket - Communication
+
+2. Adaptive Rendering Pipeline
+The system uses a threshold to fluidly transition between two distinct rendering paths:
+
+Vector Rendering (Client-Side)
+* Purpose: Used for low complexity and high interactivity.
+* Logic: When the zoom level is below the switching threshold ($\text{zoom} \le 5.9$).
+* Process: The client renders star points and coordinates directly onto an HTML <canvas> element. This utilizes the client’s GPU/CPU for instant feedback during panning and zooming.
+
+Raster Rendering (Server-Side)
+* Purpose: Used for high detail and high complexity.
+* Logic: When the zoom level is at or above the switching threshold ($\text{zoom} \ge 6$).
+* Process: The client streams its current Viewport State to the server. The server generates a single, high-resolution image (raster frame) for that exact viewport area and streams it back. This offloads heavy computation and drawing (e.g., millions of overlapping points) from the client browser.
 
 ## Switching threshold
 
@@ -132,3 +151,10 @@ Both changes occur in the same render cycle, producing an instantaneous visual j
 
 This guarantees that content is always visible, while still achieving a clean, sharp, one-frame switch between rendering modes.
 
+## Thoughts
+
+I choose the star map for ease of implementation and familiarize the concept of infinite canvas and this way i can implement it faster. After going through to development it just popup on mind since i'm doing the star map might as well have the concept of space adventure. I've added a rocket ship into the center of the canvas and it follows to the direction on where you navigate/pan to make this experience little immersive.
+
+Now here comes to the core part of the project, the generating of random stars. At first i thought making an API from my server to generate this initial stars to the vector but that beats the purpose of the client side rendering and also this may cause performance issue since it will be requesting star on every pan. And now I'm struggling on the right approach on generating the stars but at the end it just hit me "hey why not send just send the current stars that are on the viewport I can just generate them on the image as long i have their coordinates". Then came a new problem the when generating the raster frame the alignment of the stars were way way too off. The problem is the Vector space is at the center of the and my Raster space is using the top-left corner of the screen and the final result is? they are not on the same coordinate system. To solve this I've just match the Raster to my Vector coordinate system.
+
+It's a great test project, I really enjoyed building it. I've learn a lot of skills on this test. 
