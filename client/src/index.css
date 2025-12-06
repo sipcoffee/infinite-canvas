@@ -118,3 +118,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+.msg {
+  padding: 8px 12px;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  max-width: 70%;
+  font-size: 12px;
+}
+.msg.user {
+  background: #08405a;
+  color: #e2eefb;
+  margin-left: auto;
+}
+.msg.assistant {
+  background: #1e293b;
+  color: #e2eefb;
+  margin-right: auto;
+}
