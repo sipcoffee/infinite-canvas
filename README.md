@@ -1,5 +1,14 @@
 ## Orbital Navigator
 
+Explore the infinite space
+
+## Demo
+
+[Demo link on loom](https://www.loom.com/share/705e435e50ef44058393f85a0e0250ef)
+
+Switch Mode
+![Switch] (https://github.com/sipcoffee/infinite-canvas/blob/main/client/src/assets/switch.gif)
+
 ## Pre-requisites
 
 - Python 13.13.9 or higher
@@ -190,7 +199,7 @@ UI Schema
       "trigger": {
         "type": "button",
         "id": "openChat",
-        "icon": "Bot",
+        "icon": "Bot"
       },
       "content": {
         "type": "popoverContent",
@@ -205,15 +214,15 @@ UI Schema
                 "id": "send",
                 "label": "Send",
                 "icon": "SendHorizonal",
-                "iconPosition": "right",
-              },
-            ],
-          },
-        ],
-      },
-    },
-  ],
-};
+                "iconPosition": "right"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
 ```
 
 ## Thoughts
