@@ -6,8 +6,8 @@ Explore the infinite space
 
 [Demo link on loom](https://www.loom.com/share/705e435e50ef44058393f85a0e0250ef)
 
-Switch Mode
-![Switch] (./client/src/assets/switch.gif)
+Switch Mode <br>
+![Switch](./client/src/assets/switch.gif)
 
 ## Pre-requisites
 
