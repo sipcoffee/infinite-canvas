@@ -7,7 +7,7 @@ Explore the infinite space
 [Demo link on loom](https://www.loom.com/share/705e435e50ef44058393f85a0e0250ef)
 
 Switch Mode
-![Switch] (https://github.com/sipcoffee/infinite-canvas/blob/main/client/src/assets/switch.gif)
+![Switch] (https://github.com/sipcoffee/infinite-canvas/blob/d79dc79d5be4983f8e7b717ebf63bc7220d4d6e5/client/src/assets/switch.gif)
 
 ## Pre-requisites
 
